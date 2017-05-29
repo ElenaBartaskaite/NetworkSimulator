@@ -106,19 +106,26 @@ namespace RIPNetworkSimulator
         {
             foreach(Router rTo in recievedTable.Keys.Where(x=>x!=this))
             {
-                foreach (Router via in recievedTable[rTo].Keys.Where(x=> x!=this))
+                if (!table.ContainsKey(rTo))
                 {
-                    if (++recievedTable[rTo][via] < 16)//cia siaip reiktu exception mest bet px
-                    {
-                        //jeigu dar neturi into apie routeri ta
-                        if (!table.ContainsKey(rTo) && !table[rTo].ContainsKey(sender)) table.Add(rTo, new Dictionary<Router, int>() { { sender, recievedTable[rTo][via] } });
-                        //updatina jei rastas trumpesnis kelias
-                        else if (table[rTo][sender] > recievedTable[rTo][via]) table[rTo][sender] = recievedTable[rTo][via];
-                    }
-                       
+                    table.Add(rTo, new Dictionary<Router, int>());
                 }
+                if (!table[rTo].ContainsKey(sender))
+                {
+                    table[rTo].Add(sender, recievedTable[rTo].First().Value + 1);
+                }
+                KeyValuePair<Router, int> minimum = new KeyValuePair<Router, int>(null, 16);
+                foreach (var check in recievedTable[rTo].Where(x=> x.Key!=this))
+                {
+                    if (check.Value < minimum.Value)
+                    {
+                        minimum = check;
+                    }
+                }
+                table[rTo][sender] = minimum.Value;
             }
         }
+
         public Router findPath(Router to)
         {
             Router next=null;
@@ -126,6 +133,7 @@ namespace RIPNetworkSimulator
             foreach (Router a in table[to].Keys) if (table[to][a] < i) next = a;
             return next;
         }
+
         public void PrintTable()
         {
             Console.WriteLine();
