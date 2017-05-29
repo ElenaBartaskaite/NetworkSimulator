@@ -13,8 +13,10 @@ namespace RIPNetworkSimulator
         bool on;
         RoutingTable table;
         Dictionary<Router, int> links;
-        public event SentHandler routeTableSent;
-        public string messege = null;
+        public Messege messege;
+        int routerTimeout = 3;
+        public int messegeTimeoutMax = 1;
+        public int messegeTimeout = 1;
 
         public string Name
         {
@@ -56,54 +58,83 @@ namespace RIPNetworkSimulator
         {
             Name = name;
             Links = new Dictionary<Router, int>();
+            table = new RoutingTable();
             On = on;
         }
 
-        public void AddLink(Router otherRouter, int cost)//cost nesvarbu RIP algoritme bet o jeigu prireiks
+        public void AddLink(Router otherRouter)//cost nesvarbu RIP algoritme bet o jeigu prireiks
         {
-            Links.Add(otherRouter, cost);
-
+            if (Links.ContainsKey(otherRouter)) return;
+            Links.Add(otherRouter, routerTimeout);
             //tikrai buvo galima graziau parasyt, gal perrasyk
             RoutingTable temp = new RoutingTable();
-            temp.Add(otherRouter, new Dictionary<Router, int>() { { otherRouter, 1 } });//i kur, per kur ir keliones ilgis(hop count).
+            temp.Add(otherRouter, new Dictionary<Router, int>() { { otherRouter, 0 } });//i kur, per kur ir keliones ilgis(hop count).
             UpdateRouteTable(otherRouter, temp);
-            //as esu fucking durna ir nezinau naudot this ar otherRouter
-            otherRouter.routeTableSent += new SentHandler(UpdateRouteTable);
+            //as esu fucking durna ir nezinau naudot this ar otherRouters
         }
 
         public void RemoveLink(Router otherRouter)
         {
             Links.Remove(otherRouter);
             //table.Remove(otherRouter);
-            otherRouter.routeTableSent -= new SentHandler(UpdateRouteTable);
         }
 
         public void SendRouteTable()
         {
-            routeTableSent(this, table);
-        }
-
-        public void SendMessege(string m, Router to)
-        {
-            Router via;
-            via = findPath(to);
-            if (via == null) Console.WriteLine("Router is unreacheable");
-            else
+            foreach (Router r in Links.Keys)
             {
-                via.messege = m;
-                via.GetMessege(to);//reiks pakeist sita arba send funkcija nes per greitai
+                r.UpdateRouteTable(this, table);
             }
         }
 
-        public void GetMessege(Router to)
+        public void CheckLinkTimeouts()
         {
-            if (to == this) Console.WriteLine(messege);
-            else SendMessege(messege, to);
-            messege = null;
+            List<Router> linkedRouters = Links.Keys.ToList();
+            foreach (Router r in linkedRouters)
+            {
+                if (Links[r] == 0)
+                {
+                    Links[r] = 16;
+                }
+            }
+        }
+
+        public Messege CreateMessege(Router to, string m)
+        {
+            return messege = new Messege() { destination = to, messege = m};
+        }
+
+        public void SendMessege()
+        {
+            if (messege != null)
+            {
+                Router via = findPath(messege.destination);
+                if (via == null)
+                {
+                    Console.WriteLine("Router is unreacheable");
+                }
+                else
+                {
+                    via.GetMessege(messege);
+                }
+                messege = null;
+            }
+        }
+
+        public void GetMessege(Messege m)
+        {
+            if (m.destination == this)
+            {
+                Console.WriteLine(m.messege);
+                messege = null;
+                return;
+            }
+            messege = m;
         }
 
         public void UpdateRouteTable(Router sender, RoutingTable recievedTable)
         {
+            Links[sender] = routerTimeout;
             foreach(Router rTo in recievedTable.Keys.Where(x=>x!=this))
             {
                 if (!table.ContainsKey(rTo))
@@ -114,15 +145,7 @@ namespace RIPNetworkSimulator
                 {
                     table[rTo].Add(sender, recievedTable[rTo].First().Value + 1);
                 }
-                KeyValuePair<Router, int> minimum = new KeyValuePair<Router, int>(null, 16);
-                foreach (var check in recievedTable[rTo].Where(x=> x.Key!=this))
-                {
-                    if (check.Value < minimum.Value)
-                    {
-                        minimum = check;
-                    }
-                }
-                table[rTo][sender] = minimum.Value;
+                table[rTo][sender] = Math.Min(16, recievedTable[rTo].Values.Min() + 1);
             }
         }
 

@@ -7,3 +7,6 @@ C:\Users\Elena\Desktop\EB\RIPNetworkSimulator\RIPNetworkSimulator\obj\Debug\RIPN
 D:\Users\gosferano\Desktop\NetworkSimulator\RIPNetworkSimulator\bin\Debug\RIPNetworkSimulator.exe.config
 D:\Users\gosferano\Desktop\NetworkSimulator\RIPNetworkSimulator\obj\Debug\RIPNetworkSimulator.exe
 D:\Users\gosferano\Desktop\NetworkSimulator\RIPNetworkSimulator\obj\Debug\RIPNetworkSimulator.pdb
+D:\Users\gosferano\Desktop\NetworkSimulator\RIPNetworkSimulator\bin\Debug\RIPNetworkSimulator.exe
+D:\Users\gosferano\Desktop\NetworkSimulator\RIPNetworkSimulator\bin\Debug\RIPNetworkSimulator.pdb
+D:\Users\gosferano\Desktop\NetworkSimulator\RIPNetworkSimulator\obj\Debug\RIPNetworkSimulator.csprojResolveAssemblyReference.cache
