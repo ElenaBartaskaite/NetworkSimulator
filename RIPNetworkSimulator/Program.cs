@@ -42,7 +42,7 @@ namespace RIPNetworkSimulator
                         Console.WriteLine("Irasykite 2 Routeriu pavadinimus atskirtus Enter");
                         n = Console.ReadLine();
                         n2 = Console.ReadLine();
-                        net.AddLink(n, n, 1);
+                        net.AddLink(n, n2);
                         Console.WriteLine("Pridetas rysis tarp " + n + " ir " + n2);
                         break;
                     case 3:

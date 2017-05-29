@@ -31,7 +31,7 @@ namespace RIPNetworkSimulator
         }
         public void SendMsg(string from, string to, string msg)
         {
-            GetRouterByName(from).SendMessege(msg, GetRouterByName(to));
+            GetRouterByName(from).CreateMessege(GetRouterByName(to), msg);
         }
         public void PrintRoutingTable()
         {
@@ -53,7 +53,10 @@ namespace RIPNetworkSimulator
             //gal koki eventa ipist
             while(amount>0)
             {
+                DecrementTimeouts();
                 SendRoutingTables();
+                CheckRouterTimeouts();
+                SendMesseges();
                 timmer++;
                 amount--;
             }
@@ -76,6 +79,15 @@ namespace RIPNetworkSimulator
                 return false;
             }
         }
+
+        public void SendMesseges()
+        {
+            foreach (Router a in Routers.Where(x => x.messegeTimeout == 0))
+            {
+                a.SendMessege();
+            }
+        }
+
         public void SendRoutingTables()
         {
             foreach(Router a in Routers)
@@ -83,31 +95,55 @@ namespace RIPNetworkSimulator
                 a.SendRouteTable();
             }
         }
+
+        private void DecrementTimeouts()
+        {
+            foreach(Router a in Routers)
+            {
+                if (a.messegeTimeout == 0)
+                {
+                    a.messegeTimeout = a.messegeTimeoutMax;
+                }
+                a.messegeTimeout--;
+                List<Router> links = a.Links.Keys.ToList();
+                foreach(var link in links)
+                {
+                    a.Links[link]--;
+                }
+            }
+        }
+
+        private void CheckRouterTimeouts()
+        {
+            foreach(Router a in Routers)
+            {
+                a.CheckLinkTimeouts();
+            }
+        }
+
         public Router GetRouterByName(string router)
         {
             return Routers.Where(x => x.Name == router).FirstOrDefault();
         }
 
-        public bool AddLink(string router1, string router2, int cost)
+        public bool AddLink(string router1, string router2)
         {
-            return AddLink(GetRouterByName(router1), GetRouterByName(router2), cost);
+            return AddLink(GetRouterByName(router1), GetRouterByName(router2));
         }
 
-        public bool AddLink(Router router1, Router router2, int cost)
+        public bool AddLink(Router router1, Router router2)
         {
             bool added = false;
-            if (Routers.Contains(router1) && Routers.Contains(router2))
+            if (!Routers.Contains(router1) || !Routers.Contains(router2)) return false;
+            if (router1.Links.Keys.Contains(router2) == false)
             {
-                if (router1.Links.Keys.Contains(router2) == false)
-                {
-                    router1.AddLink(router2, cost);
-                    added = true;
-                }
-                if (router2.Links.Keys.Contains(router1) == false)
-                {
-                    router2.AddLink(router1, cost);
-                    added = true;
-                }
+                router1.AddLink(router2);
+                added = true;
+            }
+            if (router2.Links.Keys.Contains(router1) == false)
+            {
+                router2.AddLink(router1);
+                added = true;
             }
             return added;
         }
